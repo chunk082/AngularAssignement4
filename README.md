@@ -1,59 +1,74 @@
-# AngularApp4
+# AngularApp4 - Event Manager
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.0.
+Angular assignment project for creating and managing events using Angular forms + Angular Material components.
 
-## Development server
+## What This App Includes
 
-To start a local development server, run:
+- One **reactive form**: `Create Event`
+- One **template-driven form**: `RSVP`
+- Validation on both forms:
+  - required fields
+  - minlength / maxlength
+  - email format
+  - numeric ranges
+  - date limits (no past dates)
+- Custom validation:
+  - async title uniqueness check for event titles
+- Angular Material form components:
+  - `mat-form-field`
+  - `mat-input`
+  - `mat-datepicker`
+  - `mat-select`
+  - `mat-button`
+  - plus `mat-checkbox`, `mat-snackbar`, and loading spinner
+- Error handling strategy:
+  - inline form error messages
+  - simulated HTTP/service failures
+  - generic error messages via Material snackbar
+- Displayed data:
+  - Upcoming Events list
+  - Recent RSVP submissions list
+
+## Tech Stack
+
+- Angular 21
+- Angular Material
+- Bootstrap 5 + Bootstrap Icons
+- RxJS
+
+## Run Locally
 
 ```bash
+npm install
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open: `http://localhost:4200/`
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+## Build
 
 ```bash
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Type Check
 
-## Running unit tests
+```bash
+npx tsc -p tsconfig.app.json --noEmit
+```
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Test
 
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
+## Assignment Mapping (Quick Checklist)
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [x] Template-driven form
+- [x] Reactive form
+- [x] Validation on all forms
+- [x] Custom validation (sync/async)
+- [x] Angular Material form UI components
+- [x] Error handling with user-friendly messages + snackbar
+- [x] Input is collected and displayed in clean UI components
