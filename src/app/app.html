@@ -1,0 +1,287 @@
+<div class="container py-4 py-md-5 app-shell">
+  <header class="hero mb-3 mb-md-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div>
+        <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis px-3 py-2 mb-2">
+          Event Operations Dashboard
+        </span>
+        <h1 class="app-title mb-1">Event Manager</h1>
+        <p class="text-secondary mb-0">
+          Create events, validate input, collect RSVPs, and handle simulated API failures gracefully.
+        </p>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          <span class="badge rounded-pill chip chip-cyan px-3 py-2">Reactive + Template Forms</span>
+          <span class="badge rounded-pill chip chip-blue px-3 py-2">Async Validation</span>
+          <span class="badge rounded-pill chip chip-green px-3 py-2">Resilient Error UX</span>
+        </div>
+      </div>
+      <div class="stat-chip">
+        <small class="text-secondary">Total Events</small>
+        <strong>{{ events.length }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="row g-4 layout-main">
+    <div class="col-lg-8">
+      <mat-card class="modern-card">
+        <mat-card-header>
+          <mat-card-title><i class="bi bi-calendar2-plus me-2"></i>Create Event (Reactive Form)</mat-card-title>
+          <mat-card-subtitle>Includes async title validation and date constraints.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <form class="form-grid mt-3" [formGroup]="createEventForm" (ngSubmit)="submitCreateEvent()">
+            <mat-form-field appearance="outline">
+              <mat-label>Event Title</mat-label>
+              <input matInput formControlName="title" />
+              <mat-error *ngIf="createEventForm.controls.title.hasError('required')">
+                Title is required.
+              </mat-error>
+              <mat-error *ngIf="createEventForm.controls.title.hasError('minlength')">
+                Title must be at least 4 characters.
+              </mat-error>
+              <mat-error *ngIf="createEventForm.controls.title.hasError('titleTaken')">
+                This title already exists.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Event Date</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="date" />
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+              <mat-error *ngIf="createEventForm.controls.date.hasError('required')">
+                Date is required.
+              </mat-error>
+              <mat-error *ngIf="createEventForm.controls.date.hasError('pastDate')">
+                Date must be today or in the future.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Category</mat-label>
+              <mat-select formControlName="category">
+                <mat-option *ngFor="let category of categories" [value]="category">
+                  {{ category }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Location</mat-label>
+              <input matInput formControlName="location" />
+              <mat-error *ngIf="createEventForm.controls.location.hasError('required')">
+                Location is required.
+              </mat-error>
+              <mat-error *ngIf="createEventForm.controls.location.hasError('minlength')">
+                Location must be at least 3 characters.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Description</mat-label>
+              <textarea matInput rows="3" formControlName="description"></textarea>
+              <mat-hint align="end">
+                {{ createEventForm.controls.description.value.length }}/300
+              </mat-hint>
+              <mat-error *ngIf="createEventForm.controls.description.hasError('required')">
+                Description is required.
+              </mat-error>
+              <mat-error *ngIf="createEventForm.controls.description.hasError('minlength')">
+                Description must be at least 10 characters.
+              </mat-error>
+              <mat-error *ngIf="createEventForm.controls.description.hasError('maxlength')">
+                Description cannot exceed 300 characters.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Max Attendees</mat-label>
+              <input matInput type="number" formControlName="maxAttendees" />
+              <mat-error *ngIf="createEventForm.controls.maxAttendees.hasError('required')">
+                Max attendees is required.
+              </mat-error>
+              <mat-error
+                *ngIf="
+                  createEventForm.controls.maxAttendees.hasError('min') ||
+                  createEventForm.controls.maxAttendees.hasError('max')
+                "
+              >
+                Value must be between 1 and 500.
+              </mat-error>
+            </mat-form-field>
+
+            <div class="span-2">
+              <div class="alert alert-danger py-2 px-3 mb-3 small" role="alert" *ngIf="createEventFormMessage">
+                {{ createEventFormMessage }}
+              </div>
+              <button mat-flat-button color="primary" type="submit" [disabled]="isSubmittingEvent">
+                <span *ngIf="!isSubmittingEvent">Create Event</span>
+                <span *ngIf="isSubmittingEvent">Saving...</span>
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="modern-card mt-4">
+        <mat-card-header>
+          <mat-card-title><i class="bi bi-person-check me-2"></i>RSVP (Template-Driven Form)</mat-card-title>
+          <mat-card-subtitle>Collect attendee response with field-level validation.</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <form #rsvpForm="ngForm" class="form-grid mt-3" (ngSubmit)="submitRsvp(rsvpForm)">
+            <mat-form-field appearance="outline">
+              <mat-label>Full Name</mat-label>
+              <input
+                matInput
+                name="name"
+                [(ngModel)]="rsvpModel.name"
+                required
+                minlength="2"
+                #nameModel="ngModel"
+              />
+              <mat-error *ngIf="nameModel.errors?.['required'] && nameModel.touched">
+                Name is required.
+              </mat-error>
+              <mat-error *ngIf="nameModel.errors?.['minlength'] && nameModel.touched">
+                Name must be at least 2 characters.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input
+                matInput
+                type="email"
+                name="email"
+                [(ngModel)]="rsvpModel.email"
+                required
+                email
+                #emailModel="ngModel"
+              />
+              <mat-error *ngIf="emailModel.errors?.['required'] && emailModel.touched">
+                Email is required.
+              </mat-error>
+              <mat-error *ngIf="emailModel.errors?.['email'] && emailModel.touched">
+                Enter a valid email address.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Event</mat-label>
+              <mat-select
+                name="eventId"
+                [(ngModel)]="rsvpModel.eventId"
+                required
+                #eventModel="ngModel"
+              >
+                <mat-option *ngFor="let event of events; trackBy: trackByEventId" [value]="event.id">
+                  {{ event.title }} - {{ event.date }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="eventModel.errors?.['required'] && eventModel.touched">
+                Please select an event.
+              </mat-error>
+            </mat-form-field>
+
+            <div class="span-2">
+              <mat-checkbox name="attending" [(ngModel)]="rsvpModel.attending">
+                I plan to attend
+              </mat-checkbox>
+            </div>
+
+            <mat-form-field appearance="outline" class="span-2">
+              <mat-label>Notes (optional)</mat-label>
+              <textarea matInput rows="3" name="notes" [(ngModel)]="rsvpModel.notes"></textarea>
+            </mat-form-field>
+
+            <div class="span-2">
+              <div class="alert alert-danger py-2 px-3 mb-3 small" role="alert" *ngIf="rsvpFormMessage">
+                {{ rsvpFormMessage }}
+              </div>
+              <button mat-stroked-button color="primary" type="submit" [disabled]="isSubmittingRsvp">
+                <span *ngIf="!isSubmittingRsvp">Submit RSVP</span>
+                <span *ngIf="isSubmittingRsvp">Submitting...</span>
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="side-stack">
+        <mat-card class="modern-card">
+          <mat-card-header>
+            <mat-card-title><i class="bi bi-stars me-2"></i>Upcoming Events</mat-card-title>
+            <mat-card-subtitle>Created events are listed here after successful saves.</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="pt-2">
+            <div class="d-flex justify-content-center py-4" *ngIf="isLoadingEvents">
+              <mat-spinner diameter="36"></mat-spinner>
+            </div>
+
+            <div class="list-group list-group-flush modern-list" *ngIf="!isLoadingEvents && events.length > 0">
+              <div class="list-group-item bg-transparent py-3" *ngFor="let event of events; trackBy: trackByEventId">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+                  <h6 class="mb-0 fw-semibold">{{ event.title }}</h6>
+                  <span class="badge rounded-pill fw-semibold px-3 py-2" [ngClass]="badgeClass(event.category)">
+                    {{ event.category }}
+                  </span>
+                </div>
+                <p class="mb-2 text-secondary small">
+                  <i class="bi bi-calendar-event me-1"></i>{{ event.date }}
+                  <span class="mx-2">|</span>
+                  <i class="bi bi-geo-alt me-1"></i>{{ event.location }}
+                  <span class="mx-2">|</span>
+                  <i class="bi bi-people me-1"></i>{{ event.maxAttendees }}
+                </p>
+                <p class="mb-0 small">{{ event.description }}</p>
+              </div>
+            </div>
+
+            <div class="empty-state text-center py-4" *ngIf="!isLoadingEvents && events.length === 0">
+              <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+              <p class="text-secondary mb-0">No events yet. Create your first event.</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="modern-card mt-4">
+          <mat-card-header>
+            <mat-card-title><i class="bi bi-list-check me-2"></i>Recent RSVPs</mat-card-title>
+            <mat-card-subtitle>Template-driven form submissions are displayed here.</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="pt-2">
+            <div class="d-flex justify-content-center py-4" *ngIf="isLoadingRsvps">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+
+            <div class="list-group list-group-flush modern-list" *ngIf="!isLoadingRsvps && rsvps.length > 0">
+              <div class="list-group-item bg-transparent py-3" *ngFor="let rsvp of rsvps; trackBy: trackByRsvpId">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+                  <h6 class="mb-0 fw-semibold">{{ rsvp.name }}</h6>
+                  <span
+                    class="badge rounded-pill fw-semibold px-3 py-2"
+                    [ngClass]="rsvp.attending ? 'text-bg-success-subtle text-success-emphasis' : 'text-bg-secondary-subtle text-secondary-emphasis'"
+                  >
+                    {{ rsvp.attending ? 'Attending' : 'Not attending' }}
+                  </span>
+                </div>
+                <p class="mb-1 small text-secondary">{{ rsvp.email }}</p>
+                <p class="mb-1 small text-secondary">{{ rsvp.eventTitle }} ({{ rsvp.eventDate }})</p>
+                <p class="mb-0 small text-secondary">{{ rsvp.confirmationId }}</p>
+              </div>
+            </div>
+
+            <div class="empty-state text-center py-4" *ngIf="!isLoadingRsvps && rsvps.length === 0">
+              <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+              <p class="text-secondary mb-0">No RSVP submissions yet.</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div>
